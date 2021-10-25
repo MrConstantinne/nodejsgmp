@@ -1,0 +1,22 @@
+{
+  "name": "cli",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "task1": "nodemon task1.1/task1.1.js",
+    "task2": "nodemon task1.2/task1.2.js",
+    "task3": "babel task1.1 --out-dir task1.3 && babel task1.2 --out-dir task1.3"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "nodemon": "^2.0.13"
+  },
+  "dependencies": {
+    "babel-plugin-transform-es2015-modules-systemjs": "^6.24.1",
+    "babel-preset-es2015": "^6.24.1",
+    "csvtojson": "^2.0.10"
+  }
+}
