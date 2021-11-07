@@ -1,47 +1,47 @@
-import {RequestGetAutoSuggestUsers, UserType} from "./types";
-import {v4} from 'uuid';
+import { v4 } from 'uuid';
+import { DeleteResult, getConnection, UpdateResult } from "typeorm";
 
-const store: UserType[] = [];
+import { config } from '../config';
+import { UsersRepository } from "./users.repository";
+import { RequestGetAutoSuggestUsers, UserType } from "./users.types";
 
-export const add = async (body: UserType): Promise<UserType> => {
-    const { login, password, age } = body;
-    store.push({id: v4(), login, password, age, isDeleted: false});
-    return store[store.length - 1];
-}
+export class UsersService {
+    private usersRepository: UsersRepository;
 
-export const findById = async (id: string): Promise<UserType | null> => {
-    const user = await store.find((value: UserType) => value.id === id);
-    if (!user) return null;
-    return user;
-}
+    constructor() {
+        this.usersRepository = getConnection(config.DB_CONNECTION_NAME).getCustomRepository(UsersRepository);
+    }
 
-export const update = async (id: string, { login, password, age }: Partial<UserType>): Promise<UserType | null> => {
-    const user = await findById(id);
-    if (!user) return null;
-    if (login != null) user.login = login;
-    if (password != null) user.password = password;
-    if (age != null) user.age = age;
-    store.forEach(u => u.id === id ? user : u);
-    return findById(id)
-}
+    public async add({ login, password, age }: UserType): Promise<UserType> {
+        return this.usersRepository.save({
+            id: v4(), login, password, age, isDeleted: false
+        });
+    }
 
-export const remove = async (id: string): Promise<UserType | null> => {
-    const user = await findById(id);
-    if (!user) return null;
-    store.forEach(u => u.id === id ? user.isDeleted = true : u);
-    return findById(id)
-}
+    public async getAutoSuggestUsers({ loginSubstring, limit }: RequestGetAutoSuggestUsers): Promise<UserType[] | []>{
+        const end = limit ?? '-1';
+        const users: UserType[] = await this.usersRepository.find();
+        return users
+            .filter(v => loginSubstring != null ? v.login.includes(loginSubstring) : v)
+            .sort((a, b) => {
+                const loginA = a.login.toLowerCase();
+                const loginB = b.login.toLowerCase();
+                if (loginA < loginB) return -1;
+                if (loginA > loginB) return 1;
+                return 0;
+            })
+            .slice(0, +end);
+    }
 
-export const getAutoSuggestUsers = async ({ loginSubstring, limit }: RequestGetAutoSuggestUsers): Promise<UserType[] | []> => {
-    const end = limit ?? '-1'
-    return store
-        .filter(v => loginSubstring != null ? v.login.includes(loginSubstring) : v)
-        .sort((a, b) => {
-            const loginA = a.login.toLowerCase();
-            const loginB = b.login.toLowerCase();
-            if (loginA < loginB) return -1;
-            if (loginA > loginB) return 1;
-            return 0;
-        })
-        .slice(0, +end)
+    public async findById(id: string): Promise<UserType[] | []> {
+        return this.usersRepository.findByIds([id]);
+    }
+
+    public async update(id: string, { login, password, age }: Partial<UserType>): Promise<UpdateResult> {
+        return this.usersRepository.update(id, { login, password, age });
+    }
+
+    public async remove(id: string): Promise<DeleteResult> {
+        return this.usersRepository.delete(id);
+    }
 }

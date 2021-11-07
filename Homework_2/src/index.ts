@@ -1,18 +1,46 @@
 import express from 'express';
-import cors from 'cors';
-import {Connection, createConnection} from "typeorm";
+import { ConnectionOptions, createConnection } from "typeorm";
 
-import { config, getPostgresConfig } from "./connection";
-import { users } from './users/users.controller'
+import { config } from "./config";
+import { UsersEntity } from './users/users.entity';
+import { UsersController} from './users/users.controller'
 
-const app = express();
-const PORT = config.SERVER_PORT || 3000;
+class Server {
+    private app: express.Application;
+    private usersController: UsersController;
 
-app.use(cors());
-app.use(express.json());
+    constructor() {
+        this.app = express();
+        this.configuration();
+        this.routes();
+    }
 
-app.use('/', users);
+    public configuration() {
+        this.app.set('port', config.SERVER_PORT || 3000);
+    }
 
-createConnection();
+    public async routes() {
+        await createConnection({
+            name: config.DB_CONNECTION_NAME,
+            type: config.DB_TYPE,
+            host: config.DB_HOST_NAME,
+            port: config.DB_PORT,
+            username: config.DB_USER_NAME,
+            password: config.DB_USER_PASSWORD,
+            database: config.DB_NAME,
+            entities: [ UsersEntity ],
+            synchronize: true,
+        } as ConnectionOptions);
 
-app.listen(PORT, () => console.info(`Server listening on port: ${PORT}`))
+        this.usersController = new UsersController();
+
+        this.app.use('/user', this.usersController.router);
+    }
+
+    public start() {
+        this.app.listen(this.app.get('port'), () => console.info(`Server listening on port: ${this.app.get('port')}`));
+    }
+}
+
+const server = new Server();
+server.start();
