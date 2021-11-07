@@ -8,7 +8,9 @@
     "build": "rimraf ./dist && tsc",
     "dev": "tsnd --respawn src/index.ts",
     "start:prod": "node dist/index.js",
-    "lint": "tslint --fix --project ."
+    "lint": "tslint --fix --project .",
+    "db:start": "docker-compose up -d",
+    "db:stop": "docker-compose stop"
   },
   "keywords": [],
   "author": "",
@@ -20,7 +22,10 @@
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
     "joi": "^17.4.2",
+    "pg": "^8.7.1",
+    "reflect-metadata": "^0.1.13",
     "rimraf": "^2.7.1",
+    "typeorm": "^0.2.38",
     "uuid": "^8.3.0"
   },
   "devDependencies": {

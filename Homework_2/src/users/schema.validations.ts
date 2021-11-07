@@ -1,6 +1,6 @@
 import Joi from 'joi';
 
-export const schema = Joi.object({
+export const schemaValidations = Joi.object({
     login: Joi.string()
         .alphanum()
         .required(),
