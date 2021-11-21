@@ -12,7 +12,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"login\": \"Test\", \n    \"password\":\"Test123\", \n    \"age\": 33\n}",
+					"raw": "{\n    \"login\": \"sds\", \n    \"password\":\"ssdsd\", \n    \"age\": 15\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -20,14 +20,14 @@
 					}
 				},
 				"url": {
-					"raw": "http://localhost:3000/user",
+					"raw": "http://localhost:8000/users",
 					"protocol": "http",
 					"host": [
 						"localhost"
 					],
-					"port": "3000",
+					"port": "8000",
 					"path": [
-						"user"
+						"users"
 					]
 				}
 			},
@@ -39,14 +39,14 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:3000/user/{{id}}",
+					"raw": "http://localhost:8000/users/{{id}}",
 					"protocol": "http",
 					"host": [
 						"localhost"
 					],
-					"port": "3000",
+					"port": "8000",
 					"path": [
-						"user",
+						"users",
 						"{{id}}"
 					]
 				}
@@ -71,14 +71,14 @@
 					}
 				},
 				"url": {
-					"raw": "http://localhost:3000/user",
+					"raw": "http://localhost:8000/users",
 					"protocol": "http",
 					"host": [
 						"localhost"
 					],
-					"port": "3000",
+					"port": "8000",
 					"path": [
-						"user"
+						"users"
 					]
 				}
 			},
@@ -91,7 +91,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"login\": \"test2\", \n    \"password\":\"test2\", \n    \"age\":\"32\"\n}",
+					"raw": "{\n    \"login\": \"test2\", \n    \"password\":\"test2\", \n    \"age\":32\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -99,14 +99,14 @@
 					}
 				},
 				"url": {
-					"raw": "http://localhost:3000/user/{{id}}",
+					"raw": "http://localhost:8000/users/{{id}}",
 					"protocol": "http",
 					"host": [
 						"localhost"
 					],
-					"port": "3000",
+					"port": "8000",
 					"path": [
-						"user",
+						"users",
 						"{{id}}"
 					]
 				}
@@ -119,14 +119,14 @@
 				"method": "DELETE",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:3000/user/{{id}}",
+					"raw": "http://localhost:8000/users/{{id}}",
 					"protocol": "http",
 					"host": [
 						"localhost"
 					],
-					"port": "3000",
+					"port": "8000",
 					"path": [
-						"user",
+						"users",
 						"{{id}}"
 					]
 				}

@@ -1,58 +1,91 @@
-import { Router, Request, Response } from 'express';
+import "reflect-metadata";
+import { Request, Response } from "express";
+import { inject, injectable } from "inversify";
 
-import { UsersService } from './users.service';
-import { usersValidations } from './users.validations';
+import { BaseController } from "../common/base.controller";
+import { ValidateMiddleware } from "../common/validate.middleware";
+import { TYPES } from "../types";
 
-export class UsersController {
-    public router: Router;
-    private usersService: UsersService;
+import { UserUpdateDto } from "./dto/user-update.dto";
+import { UserDto } from "./dto/user.dto";
+import { UsersControllerInterface } from "./interfaces/users.controller.interface";
+import { UsersService } from "./users.service";
 
-    constructor() {
-        this.router = Router();
-        this.usersService = new UsersService();
-        this.routes();
+@injectable()
+export class UsersController
+  extends BaseController
+  implements UsersControllerInterface
+{
+  constructor(@inject(TYPES.UsersService) private usersService: UsersService) {
+    super();
+    this.bindRoutes([
+      { path: "/", method: "get", func: this.list },
+      {
+        path: "/",
+        method: "post",
+        func: this.create,
+        middlewares: [new ValidateMiddleware(UserDto)],
+      },
+      { path: "/:id", method: "get", func: this.findById },
+      {
+        path: "/:id",
+        method: "patch",
+        func: this.update,
+        middlewares: [new ValidateMiddleware(UserUpdateDto)],
+      },
+      { path: "/:id", method: "delete", func: this.delete },
+    ]);
+  }
+
+  public async create(
+    // eslint-disable-next-line @typescript-eslint/ban-types
+    { body }: Request<{}, {}, UserDto>,
+    res: Response,
+  ): Promise<Response | void> {
+    const result = await this.usersService.add(body);
+    if (!result) {
+      throw new Error("NOT_FOUND");
     }
+    this.created(res, { id: result.id, login: result.login });
+  }
 
-    public async create({ body }: Request, res: Response) {
-        const validate = usersValidations.validate(body);
-        if (validate.error) res.status(400).json({ error: validate.error })
-        const user = await this.usersService.add(body);
-        res.status(201).json(user);
-    }
+  public async list(
+    { body }: Request,
+    res: Response,
+  ): Promise<Response | void> {
+    const user = await this.usersService.getAutoSuggestUsers(body);
+    user
+      ? this.ok(res, user)
+      : res.status(404).json({ message: "Users not found" });
+  }
 
-    public async list({ body }: Request, res: Response){
-        const user = await this.usersService.getAutoSuggestUsers(body);
-        res.status(200).json(user);
-    }
+  public async findById(
+    { params }: Request,
+    res: Response,
+  ): Promise<Response | void> {
+    const user = await this.usersService.findById(params.id);
+    user
+      ? this.ok(res, user)
+      : res.status(404).json({ message: "User not found" });
+  }
 
-    public async findById({ params }: Request, res: Response) {
-        const user = await this.usersService.findById(params.id);
-        user
-            ? res.status(200).json(user)
-            : res.status(404).json({ message: 'User not found' });
-    }
+  public async update(
+    { params, body }: Request,
+    res: Response,
+  ): Promise<Response | void> {
+    const user = await this.usersService.update(params.id, body);
+    user
+      ? this.ok(res, user)
+      : res.status(404).json({ message: "User not found" });
+  }
 
-    public async update({ params, body }: Request, res: Response) {
-        const validate = usersValidations.validate(body);
-        if (validate.error) res.status(400).json({ error: validate.error })
-        const user = await this.usersService.update(params.id, body);
-        user
-            ? res.status(200).json(user)
-            : res.status(404).json({ message: 'User not found' });
-    }
-
-    public async delete({ params }: Request, res: Response) {
-        const user = await this.usersService.remove(params.id);
-        user
-            ? res.status(200).json(user)
-            : res.status(404).json({ message: 'User not found' });
-    }
-
-    public routes() {
-        this.router.get('/', this.list);
-        this.router.post('/', this.create);
-        this.router.get('/:id', this.findById);
-        this.router.patch('/:id', this.update);
-        this.router.delete('/:id', this.delete);
-    }
+  public async delete(
+    { params }: Request,
+    res: Response,
+  ): Promise<Response | void> {
+    const user = await this.usersService.remove(params.id);
+    user
+      ? this.ok(res, user)
+      : res.status(404).json({ message: "User not found" });
+  }
 }
