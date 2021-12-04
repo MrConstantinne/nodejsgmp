@@ -6,6 +6,7 @@ import { ConfigServiceInterface } from "../config/config.service.interface";
 import { TYPES } from "../types";
 
 import { UserListDto } from "./dto/user-list.dto";
+import { UserLoginDto } from "./dto/user-login.dto";
 import { UserDto } from "./dto/user.dto";
 import { UsersRepositoryInterface } from "./interfaces/users.repository.interface";
 import { UsersServiceInterface } from "./interfaces/users.service.interface";
@@ -84,5 +85,18 @@ export class UsersService implements UsersServiceInterface {
       return null;
     }
     return this.usersRepository.remove(id);
+  }
+
+  async validateUser({ login, password }: UserLoginDto): Promise<boolean> {
+    const existedUser = await this.usersRepository.find(login);
+    if (!existedUser) {
+      return false;
+    }
+    const newUser = new UsersEntity(
+      existedUser.login,
+      existedUser.age,
+      existedUser.password,
+    );
+    return newUser.comparePassword(password);
   }
 }

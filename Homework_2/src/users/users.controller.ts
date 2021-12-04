@@ -1,18 +1,22 @@
 import "reflect-metadata";
 import { Request, Response, NextFunction } from "express";
 import { inject, injectable } from "inversify";
+import { sign } from "jsonwebtoken";
 
 import { BaseController } from "../common/base.controller";
 import { LoggingMiddleware } from "../common/logging.middleware";
 import { ValidateMiddleware } from "../common/validate.middleware";
+import { ConfigService } from "../config/config.service";
 import { HttpError } from "../errors/http-error.class";
 import { LoggerInterface } from "../logger/logger.interface";
 import { TYPES } from "../types";
 
+import { UserLoginDto } from "./dto/user-login.dto";
 import { UserUpdateDto } from "./dto/user-update.dto";
 import { UserDto } from "./dto/user.dto";
 import { UsersControllerInterface } from "./interfaces/users.controller.interface";
 import { UsersService } from "./users.service";
+import {AuthGuard} from "../common/auth.guard";
 
 @injectable()
 export class UsersController
@@ -22,15 +26,23 @@ export class UsersController
   constructor(
     @inject(TYPES.UsersService) private usersService: UsersService,
     @inject(TYPES.LoggerService) private loggerService: LoggerInterface,
+    @inject(TYPES.ConfigService) private configService: ConfigService,
   ) {
     super(loggerService);
     this.bindRoutes([
+      {
+        path: "/login",
+        method: "post",
+        func: this.login,
+        service: "USERS",
+        middlewares: [new LoggingMiddleware(loggerService)],
+      },
       {
         path: "/",
         method: "get",
         func: this.list,
         service: "USERS",
-        middlewares: [new LoggingMiddleware(loggerService)],
+        middlewares: [new LoggingMiddleware(loggerService), new AuthGuard()],
       },
       {
         path: "/",
@@ -40,6 +52,7 @@ export class UsersController
         middlewares: [
           new LoggingMiddleware(loggerService),
           new ValidateMiddleware(UserDto),
+          new AuthGuard(),
         ],
       },
       {
@@ -47,7 +60,7 @@ export class UsersController
         method: "get",
         func: this.findById,
         service: "USERS",
-        middlewares: [new LoggingMiddleware(loggerService)],
+        middlewares: [new LoggingMiddleware(loggerService), new AuthGuard()],
       },
       {
         path: "/:id",
@@ -57,6 +70,7 @@ export class UsersController
         middlewares: [
           new ValidateMiddleware(UserUpdateDto),
           new LoggingMiddleware(loggerService),
+          new AuthGuard(),
         ],
       },
       {
@@ -64,7 +78,7 @@ export class UsersController
         method: "delete",
         func: this.delete,
         service: "USERS",
-        middlewares: [new LoggingMiddleware(loggerService)],
+        middlewares: [new LoggingMiddleware(loggerService), new AuthGuard()],
       },
     ]);
   }
@@ -156,5 +170,49 @@ export class UsersController
             `Method: ${method} Args: ${JSON.stringify(params)}`,
           ),
         );
+  }
+
+  public async login(
+    // eslint-disable-next-line @typescript-eslint/ban-types
+    req: Request<{}, {}, UserLoginDto>,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
+    const result = await this.usersService.validateUser(req.body);
+    if (!result) {
+      return next(
+        new HttpError(
+          403,
+          "Authorization error",
+          `Method: ${req.method} Args: ${JSON.stringify(req.body)}`,
+        ),
+      );
+    }
+    const jwt = await this.signJWT(
+      req.body.login,
+      this.configService.get("SECRET"),
+    );
+    this.ok(res, { jwt });
+  }
+
+  private signJWT(login: string, secret: string): Promise<string> {
+    return new Promise<string>((resolve, reject) => {
+      sign(
+        {
+          login,
+          iat: Math.floor(Date.now() / 1000),
+        },
+        secret,
+        {
+          algorithm: "HS256",
+        },
+        (err, token) => {
+          if (err) {
+            reject(err);
+          }
+          resolve(token as string);
+        },
+      );
+    });
   }
 }

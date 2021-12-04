@@ -2,6 +2,7 @@ import "reflect-metadata";
 import { Server } from "http";
 
 import { json } from "body-parser";
+import cors from "cors";
 import express, { Express } from "express";
 import { inject, injectable } from "inversify";
 
@@ -12,6 +13,7 @@ import { GroupController } from "./group/group.controller";
 import { LoggerInterface } from "./logger/logger.interface";
 import { TYPES } from "./types";
 import { UsersController } from "./users/users.controller";
+import {AuthMiddleware} from "./common/auth.middleware";
 
 @injectable()
 export class App {
@@ -34,6 +36,9 @@ export class App {
 
   useMiddleware(): void {
     this.app.use(json());
+    this.app.use(cors());
+    const authMiddleware = new AuthMiddleware(this.configService.get("SECRET"));
+    this.app.use(authMiddleware.execute.bind(authMiddleware));
   }
 
   useRoutes(): void {

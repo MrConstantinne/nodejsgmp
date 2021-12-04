@@ -8,4 +8,5 @@ export interface UsersRepositoryInterface {
   update: (user: UsersEntity) => Promise<UserModel | null>;
   remove: (id: string) => Promise<UserModel | null>;
   findAll: () => Promise<UserModel[] | []>;
+  find: (login: string) => Promise<UserModel | null>;
 }

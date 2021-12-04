@@ -12,6 +12,7 @@ import { GroupDto } from "./dto/group.dto";
 import { UserGroupDto } from "./dto/userGroup.dto";
 import { GroupService } from "./group.service";
 import { GroupControllerInterface } from "./interface/group.controller.interface";
+import {AuthGuard} from "../common/auth.guard";
 
 @injectable()
 export class GroupController
@@ -29,42 +30,42 @@ export class GroupController
         method: "get",
         func: this.list,
         service: "GROUP",
-        middlewares: [new LoggingMiddleware(loggerService)],
+        middlewares: [new LoggingMiddleware(loggerService), new AuthGuard()],
       },
       {
         path: "/",
         method: "post",
         func: this.create,
         service: "GROUP",
-        middlewares: [new LoggingMiddleware(loggerService)],
+        middlewares: [new LoggingMiddleware(loggerService), new AuthGuard()],
       },
       {
         path: "/:id",
         method: "get",
         func: this.findById,
         service: "GROUP",
-        middlewares: [new LoggingMiddleware(loggerService)],
+        middlewares: [new LoggingMiddleware(loggerService), new AuthGuard()],
       },
       {
         path: "/:id",
         method: "patch",
         func: this.update,
         service: "GROUP",
-        middlewares: [new LoggingMiddleware(loggerService)],
+        middlewares: [new LoggingMiddleware(loggerService), new AuthGuard()],
       },
       {
         path: "/:id",
         method: "delete",
         func: this.delete,
         service: "GROUP",
-        middlewares: [new LoggingMiddleware(loggerService)],
+        middlewares: [new LoggingMiddleware(loggerService), new AuthGuard()],
       },
       {
         path: "/add",
         method: "post",
         func: this.addUsersToGroup,
         service: "GROUP",
-        middlewares: [new LoggingMiddleware(loggerService)],
+        middlewares: [new LoggingMiddleware(loggerService), new AuthGuard()],
       },
     ]);
   }

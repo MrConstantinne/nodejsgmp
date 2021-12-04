@@ -47,4 +47,11 @@ export class UsersRepository implements UsersRepositoryInterface {
   async findAll(): Promise<UserModel[] | []> {
     return this.prismaService.client.userModel.findMany();
   }
+  async find(login: string): Promise<UserModel | null> {
+    return this.prismaService.client.userModel.findFirst({
+      where: {
+        login,
+      },
+    });
+  }
 }

@@ -24,3 +24,14 @@
 - Импортировать файл Users.postman_collection.json в Postman и в переменных задать id пользователя после создания
 - Импортировать файл Groups.postman_collection.json в Postman и в переменных задать id группы после создания
 <hr>
+
+### Homework 5
+
+- Добавлено логгирование и обработка ошибок
+<hr>
+
+### Homework 6
+
+- Добавлен Auth guard
+- После логина добавить в postman_collection полученное значение JWT токена для глобальной переменной {{TOKEN}}
+<hr>
