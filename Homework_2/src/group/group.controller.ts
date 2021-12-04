@@ -1,11 +1,13 @@
 import "reflect-metadata";
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import { inject, injectable } from "inversify";
 
 import { BaseController } from "../common/base.controller";
+import { LoggingMiddleware } from "../common/logging.middleware";
+import { HttpError } from "../errors/http-error.class";
+import { LoggerInterface } from "../logger/logger.interface";
 import { TYPES } from "../types";
 
-// eslint-disable-next-line import/namespace
 import { GroupDto } from "./dto/group.dto";
 import { UserGroupDto } from "./dto/userGroup.dto";
 import { GroupService } from "./group.service";
@@ -18,79 +20,149 @@ export class GroupController
 {
   constructor(
     @inject(TYPES.GroupsService) private groupsService: GroupService,
+    @inject(TYPES.LoggerService) private loggerService: LoggerInterface,
   ) {
-    super();
+    super(loggerService);
     this.bindRoutes([
-      { path: "/", method: "get", func: this.list },
+      {
+        path: "/",
+        method: "get",
+        func: this.list,
+        service: "GROUP",
+        middlewares: [new LoggingMiddleware(loggerService)],
+      },
       {
         path: "/",
         method: "post",
         func: this.create,
+        service: "GROUP",
+        middlewares: [new LoggingMiddleware(loggerService)],
       },
-      { path: "/:id", method: "get", func: this.findById },
+      {
+        path: "/:id",
+        method: "get",
+        func: this.findById,
+        service: "GROUP",
+        middlewares: [new LoggingMiddleware(loggerService)],
+      },
       {
         path: "/:id",
         method: "patch",
         func: this.update,
+        service: "GROUP",
+        middlewares: [new LoggingMiddleware(loggerService)],
       },
-      { path: "/:id", method: "delete", func: this.delete },
-      { path: "/add", method: "post", func: this.addUsersToGroup },
+      {
+        path: "/:id",
+        method: "delete",
+        func: this.delete,
+        service: "GROUP",
+        middlewares: [new LoggingMiddleware(loggerService)],
+      },
+      {
+        path: "/add",
+        method: "post",
+        func: this.addUsersToGroup,
+        service: "GROUP",
+        middlewares: [new LoggingMiddleware(loggerService)],
+      },
     ]);
   }
 
   public async create(
     // eslint-disable-next-line @typescript-eslint/ban-types
-    { body }: Request<{}, {}, GroupDto>,
+    { body, method }: Request<{}, {}, GroupDto>,
     res: Response,
+    next: NextFunction,
   ): Promise<Response | void> {
     const result = await this.groupsService.add(body);
     if (!result) {
-      throw new Error("NOT_FOUND");
+      next(
+        new HttpError(
+          404,
+          "Group not found",
+          `Method: ${method}, Args: ${JSON.stringify(body)}`,
+        ),
+      );
     }
     this.created(res, { id: result.id });
   }
 
-  public async list(req: Request, res: Response): Promise<Response | void> {
+  public async list(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<Response | void> {
     const group = await this.groupsService.getAllGroups();
     group
       ? this.ok(res, group)
-      : res.status(404).json({ message: "Group not found" });
+      : next(
+          new HttpError(
+            404,
+            "Group not found",
+            `Method: ${req.method}, Args: ${JSON.stringify(req.body)}`,
+          ),
+        );
   }
 
   public async findById(
-    { params }: Request,
+    { params, method }: Request,
     res: Response,
+    next: NextFunction,
   ): Promise<Response | void> {
     const group = await this.groupsService.findById(params.id);
     group
       ? this.ok(res, group)
-      : res.status(404).json({ message: "Group not found" });
+      : next(
+          new HttpError(
+            404,
+            "Group not found",
+            `Method: ${method}, Args: ${JSON.stringify(params)}`,
+          ),
+        );
   }
 
   public async update(
-    { params, body }: Request,
+    { params, body, method }: Request,
     res: Response,
+    next: NextFunction,
   ): Promise<Response | void> {
     const group = await this.groupsService.update(params.id, body);
     group
       ? this.ok(res, group)
-      : res.status(404).json({ message: "Group not found" });
+      : next(
+          new HttpError(
+            404,
+            "Group not found",
+            `Method: ${method}, Args: ${JSON.stringify(body)} ${JSON.stringify(
+              params,
+            )}`,
+          ),
+        );
   }
 
   public async delete(
-    { params }: Request,
+    { params, method }: Request,
     res: Response,
+    next: NextFunction,
   ): Promise<Response | void> {
     const group = await this.groupsService.remove(params.id);
     group
       ? this.ok(res, group)
-      : res.status(404).json({ message: "Group not found" });
+      : next(
+          new HttpError(
+            404,
+            "Group not found",
+            `Method: ${method}, Args: ${JSON.stringify(params)}`,
+          ),
+        );
   }
 
   public async addUsersToGroup(
     // eslint-disable-next-line @typescript-eslint/ban-types
-    { body }: Request<{}, {}, UserGroupDto>,
+    { body, method }: Request<{}, {}, UserGroupDto>,
     res: Response,
+    next: NextFunction,
   ): Promise<Response | void> {
     const group = await this.groupsService.addToGroup(
       body.userId,
@@ -98,6 +170,12 @@ export class GroupController
     );
     group
       ? this.ok(res, group)
-      : res.status(404).json({ message: "Users or Group not found" });
+      : next(
+          new HttpError(
+            404,
+            "Group or User not found",
+            `Method: ${method}, Args: ${JSON.stringify(body)}`,
+          ),
+        );
   }
 }

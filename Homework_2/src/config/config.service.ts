@@ -1,5 +1,8 @@
 import { config, DotenvConfigOutput, DotenvParseOutput } from "dotenv";
-import { injectable } from "inversify";
+import { inject, injectable } from "inversify";
+
+import { LoggerInterface } from "../logger/logger.interface";
+import { TYPES } from "../types";
 
 import { ConfigServiceInterface } from "./config.service.interface";
 
@@ -7,15 +10,19 @@ import { ConfigServiceInterface } from "./config.service.interface";
 export class ConfigService implements ConfigServiceInterface {
   private readonly config: DotenvParseOutput;
 
-  constructor() {
+  constructor(
+    @inject(TYPES.LoggerService) private loggerService: LoggerInterface,
+  ) {
     const result: DotenvConfigOutput = config();
     if (result.error) {
-      console.error(
+      this.loggerService.error(
         "[ ConfigService ] Configuration not loaded: ",
         result.error,
       );
     } else {
-      console.info("[ ConfigService ] Configuration loaded successfully");
+      this.loggerService.log(
+        "[ ConfigService ] Configuration loaded successfully",
+      );
       this.config = result.parsed as DotenvParseOutput;
     }
   }

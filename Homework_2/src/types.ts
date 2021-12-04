@@ -8,4 +8,6 @@ export const TYPES = {
   GroupsController: Symbol.for("GroupsController"),
   GroupsService: Symbol.for("GroupsService"),
   GroupsRepository: Symbol.for("GroupsRepository"),
+  LoggerService: Symbol.for("LoggerService"),
+  ExceptionFilter: Symbol.for("ExceptionFilter"),
 };

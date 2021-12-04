@@ -2,13 +2,15 @@ import "reflect-metadata";
 import { Router, Response } from "express";
 import { injectable } from "inversify";
 
+import { LoggerInterface } from "../logger/logger.interface";
+
 import { Route } from "./route.interfase";
 
 @injectable()
 export abstract class BaseController {
   private readonly _router: Router;
 
-  constructor() {
+  constructor(private logger: LoggerInterface) {
     this._router = Router();
   }
 
@@ -31,7 +33,7 @@ export abstract class BaseController {
 
   protected bindRoutes(routes: Route[]): void {
     for (const route of routes) {
-      console.log(`[ ${route.method} ] ${route.path}`);
+      this.logger.log(`[ ${route.service} ] ${route.method}${route.path}`);
       const middleware = route.middlewares?.map((m) => m.execute.bind(m));
       const handler = route.func.bind(this);
       const pipeline = middleware ? [...middleware, handler] : handler;
