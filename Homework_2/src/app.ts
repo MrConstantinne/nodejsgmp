@@ -6,6 +6,7 @@ import cors from "cors";
 import express, { Express } from "express";
 import { inject, injectable } from "inversify";
 
+import { AuthMiddleware } from "./common/auth.middleware";
 import { ConfigServiceInterface } from "./config/config.service.interface";
 import { PrismaService } from "./database/prisma.service";
 import { ExceptionFilterInterface } from "./errors/exception.filter.interface";
@@ -13,13 +14,12 @@ import { GroupController } from "./group/group.controller";
 import { LoggerInterface } from "./logger/logger.interface";
 import { TYPES } from "./types";
 import { UsersController } from "./users/users.controller";
-import {AuthMiddleware} from "./common/auth.middleware";
 
 @injectable()
 export class App {
   app: Express;
-  private server: Server;
-  private readonly port: number;
+  server: Server;
+  port: number;
 
   constructor(
     @inject(TYPES.UsersController) private usersController: UsersController,
@@ -57,5 +57,9 @@ export class App {
     await this.prismaService.connect();
     this.server = this.app.listen(this.port);
     this.loggerService.log(`Server listening on port: ${this.port}`);
+  }
+
+  public close(): void {
+    this.server.close();
   }
 }

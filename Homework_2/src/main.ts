@@ -22,6 +22,11 @@ import { UsersController } from "./users/users.controller";
 import { UsersRepository } from "./users/users.repository";
 import { UsersService } from "./users/users.service";
 
+export interface BootstrapReturnInterface {
+  appContainer: Container;
+  app: App;
+}
+
 export const appBindings = new ContainerModule((bind: interfaces.Bind) => {
   bind<App>(TYPES.Application).to(App).inSingletonScope();
   bind<ConfigServiceInterface>(TYPES.ConfigService)
@@ -54,13 +59,12 @@ export const appBindings = new ContainerModule((bind: interfaces.Bind) => {
     .inSingletonScope();
 });
 
-// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-function bootstrap() {
+async function bootstrap(): Promise<BootstrapReturnInterface> {
   const appContainer = new Container();
   appContainer.load(appBindings);
   const app = appContainer.get<App>(TYPES.Application);
-  app.init();
+  await app.init();
   return { app, appContainer };
 }
 
-export const { app, appContainer } = bootstrap();
+export const boot = bootstrap();

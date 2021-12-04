@@ -3,6 +3,7 @@ import { Request, Response, NextFunction } from "express";
 import { inject, injectable } from "inversify";
 import { sign } from "jsonwebtoken";
 
+import { AuthGuard } from "../common/auth.guard";
 import { BaseController } from "../common/base.controller";
 import { LoggingMiddleware } from "../common/logging.middleware";
 import { ValidateMiddleware } from "../common/validate.middleware";
@@ -16,7 +17,6 @@ import { UserUpdateDto } from "./dto/user-update.dto";
 import { UserDto } from "./dto/user.dto";
 import { UsersControllerInterface } from "./interfaces/users.controller.interface";
 import { UsersService } from "./users.service";
-import {AuthGuard} from "../common/auth.guard";
 
 @injectable()
 export class UsersController
@@ -52,7 +52,6 @@ export class UsersController
         middlewares: [
           new LoggingMiddleware(loggerService),
           new ValidateMiddleware(UserDto),
-          new AuthGuard(),
         ],
       },
       {
