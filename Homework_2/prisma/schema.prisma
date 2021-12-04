@@ -11,9 +11,34 @@ datasource db {
 }
 
 model UserModel {
-    id String @unique
-    login String
-    password String
-    age Int
-    isDeleted Boolean
+  id        String      @id @default(uuid())
+  login     String
+  password  String
+  age       Int
+  isDeleted Boolean
+  UserGroup UserGroup[]
+}
+
+model GroupModel {
+  id         String      @id @default(uuid())
+  name       String
+  permission Group[]
+  UserGroup  UserGroup[]
+}
+
+model UserGroup {
+  userId  String     @map("user_id")
+  groupId String     @map("group_id")
+  user    UserModel  @relation(fields: [userId], references: [id])
+  group   GroupModel @relation(fields: [groupId], references: [id])
+
+  @@id([userId, groupId])
+}
+
+enum Group {
+  READ
+  WRITE
+  DELETE
+  SHARE
+  UPLOAD_FILES
 }

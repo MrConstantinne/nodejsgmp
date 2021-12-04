@@ -1,8 +1,11 @@
 export const TYPES = {
   Application: Symbol.for("Application"),
-  UsersService: Symbol.for("UsersService"),
   ConfigService: Symbol.for("ConfigService"),
-  UsersController: Symbol.for("UsersController"),
   PrismaService: Symbol.for("PrismaService"),
+  UsersController: Symbol.for("UsersController"),
+  UsersService: Symbol.for("UsersService"),
   UsersRepository: Symbol.for("UsersRepository"),
+  GroupsController: Symbol.for("GroupsController"),
+  GroupsService: Symbol.for("GroupsService"),
+  GroupsRepository: Symbol.for("GroupsRepository"),
 };

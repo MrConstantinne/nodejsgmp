@@ -5,10 +5,10 @@
   "main": "main.ts",
   "type": "commonjs",
   "scripts": {
-    "start": "npm run generate && nodemon ./src/main.ts",
+    "start": "npm run generate && npm run db:start && nodemon ./src/main.ts",
     "build": "rimraf ./dist && tsc",
     "dev": "tsnd --respawn src/main.ts",
-    "start:prod": "npm run build && npm run generate && node dist/main.js",
+    "start:prod": "npm run build && npm run generate && npm run db:start && node dist/main.js",
     "lint": "eslint \"./src/**/*.ts\" --fix",
     "generate": "npx prisma generate",
     "db:start": "docker-compose up -d",
