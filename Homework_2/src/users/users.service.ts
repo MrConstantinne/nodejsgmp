@@ -1,47 +1,102 @@
-import {RequestGetAutoSuggestUsers, UserType} from "./types";
-import {v4} from 'uuid';
+import "reflect-metadata";
+import { UserModel } from "@prisma/client";
+import { inject, injectable } from "inversify";
 
-const store: UserType[] = [];
+import { ConfigServiceInterface } from "../config/config.service.interface";
+import { TYPES } from "../types";
 
-export const add = async (body: UserType): Promise<UserType> => {
-    const { login, password, age } = body;
-    store.push({id: v4(), login, password, age, isDeleted: false});
-    return store[store.length - 1];
-}
+import { UserListDto } from "./dto/user-list.dto";
+import { UserLoginDto } from "./dto/user-login.dto";
+import { UserDto } from "./dto/user.dto";
+import { UsersRepositoryInterface } from "./interfaces/users.repository.interface";
+import { UsersServiceInterface } from "./interfaces/users.service.interface";
+import { UsersEntity } from "./users.entity";
 
-export const findById = async (id: string): Promise<UserType | null> => {
-    const user = await store.find((value: UserType) => value.id === id);
-    if (!user) return null;
-    return user;
-}
+@injectable()
+export class UsersService implements UsersServiceInterface {
+  constructor(
+    @inject(TYPES.ConfigService) private configService: ConfigServiceInterface,
+    @inject(TYPES.UsersRepository)
+    private usersRepository: UsersRepositoryInterface,
+  ) {}
 
-export const update = async (id: string, { login, password, age }: Partial<UserType>): Promise<UserType | null> => {
-    const user = await findById(id);
-    if (!user) return null;
-    if (login != null) user.login = login;
-    if (password != null) user.password = password;
-    if (age != null) user.age = age;
-    store.forEach(u => u.id === id ? user : u);
-    return findById(id)
-}
+  public async add({ login, password, age }: UserDto): Promise<UserModel> {
+    const user = new UsersEntity(login, age);
+    const salt = this.configService.get("SALT");
+    user.setId();
+    await user.setPassword(password, +salt);
 
-export const remove = async (id: string): Promise<UserType | null> => {
-    const user = await findById(id);
-    if (!user) return null;
-    store.forEach(u => u.id === id ? user.isDeleted = true : u);
-    return findById(id)
-}
+    return this.usersRepository.create(user);
+  }
 
-export const getAutoSuggestUsers = async ({ loginSubstring, limit }: RequestGetAutoSuggestUsers): Promise<UserType[] | []> => {
-    const end = limit ?? '-1'
-    return store
-        .filter(v => loginSubstring != null ? v.login.includes(loginSubstring) : v)
-        .sort((a, b) => {
-            const loginA = a.login.toLowerCase();
-            const loginB = b.login.toLowerCase();
-            if (loginA < loginB) return -1;
-            if (loginA > loginB) return 1;
-            return 0;
-        })
-        .slice(0, +end)
+  public async getAutoSuggestUsers({
+    limit,
+    loginSubstring,
+  }: UserListDto): Promise<UserModel[] | null> {
+    const end = limit ?? "-1";
+    const users = await this.usersRepository.findAll();
+    if (users.length <= 0) {
+      return null;
+    }
+    return users
+      .filter((v) =>
+        loginSubstring !== null ? v.login.includes(loginSubstring as string) : v,
+      )
+      .sort((a, b) => {
+        const loginA = a.login.toLowerCase();
+        const loginB = b.login.toLowerCase();
+        if (loginA < loginB) {
+          return -1;
+        }
+        if (loginA > loginB) {
+          return 1;
+        }
+        return 0;
+      })
+      .slice(0, +end);
+  }
+
+  public async findById(id: string): Promise<UserModel | null> {
+    return this.usersRepository.findById(id);
+  }
+
+  public async update(
+    id: string,
+    { login, age, password }: Partial<UserDto>,
+  ): Promise<UserModel | null> {
+    const existedUser = await this.findById(id);
+    if (!existedUser) {
+      return null;
+    }
+
+    const user = new UsersEntity(
+      login ? login : existedUser.login,
+      age ? age : existedUser.age,
+      password ? password : existedUser.password,
+      existedUser.id,
+    );
+
+    return this.usersRepository.update(user);
+  }
+
+  public async remove(id: string): Promise<UserModel | null> {
+    const existedUser = await this.findById(id);
+    if (!existedUser) {
+      return null;
+    }
+    return this.usersRepository.remove(id);
+  }
+
+  async validateUser({ login, password }: UserLoginDto): Promise<boolean> {
+    const existedUser = await this.usersRepository.find(login);
+    if (!existedUser) {
+      return false;
+    }
+    const newUser = new UsersEntity(
+      existedUser.login,
+      existedUser.age,
+      existedUser.password,
+    );
+    return newUser.comparePassword(password);
+  }
 }
